@@ -8,17 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
+// some global variables
+
+BOOL showAll = NO;
+
 void usage(){
     printf("Print NSFileProtectionKey\n");
     printf("usage: fpattr [-a] filename [filename ...]\n");
     printf("  -a : print all file attributes\n");
 }
 
-void printFileAttributes(NSFileManager *fm, NSString *filename, BOOL showAll){
+void printFileAttributes(NSFileManager *fm, NSString *filename){
     
     NSError *error;
     
-    printf("[+] Full path: %s\n", [filename UTF8String]);
+    printf("[+] File: %s\n", [filename UTF8String]);
     if ( [fm fileExistsAtPath:filename] ){
         NSDictionary *attributes = [fm attributesOfItemAtPath:filename error:&error];
         if(showAll){
@@ -39,8 +43,6 @@ int main(int argc, char * argv[]) {
         
         NSFileManager *fm = [NSFileManager defaultManager];
         NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-        NSString *docPath = [fm currentDirectoryPath];
-        BOOL showAll = NO;
 
         if([arguments count] < 2){
             usage();
@@ -52,6 +54,10 @@ int main(int argc, char * argv[]) {
         NSMutableArray *filenames = [NSMutableArray arrayWithArray: arguments];
         for (int i=0; i < [filenames count]; i++){
             if([[filenames objectAtIndex:i] hasPrefix:@"-"]){
+                if([[filenames objectAtIndex:i] length] < 2){
+                    [filenames removeObjectAtIndex: i];
+                    continue;
+                }
                 switch([[filenames objectAtIndex:i] characterAtIndex:1]){
                     case 'a' :
                         showAll = YES;
@@ -65,8 +71,8 @@ int main(int argc, char * argv[]) {
         
         /* print attributes for each file */
         for (int i=1; i < [filenames count]; i++){
-            NSString *checkfile = [docPath stringByAppendingPathComponent:[filenames objectAtIndex:i]];
-            printFileAttributes(fm, checkfile, showAll);
+            NSString *checkfile = [[filenames objectAtIndex:i] stringByStandardizingPath];
+            printFileAttributes(fm, checkfile);
         }
     }
     return EXIT_SUCCESS;
